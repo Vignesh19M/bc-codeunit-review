@@ -68,6 +68,7 @@ codeunit 50046 "Moengage API Integration"
         JObjAttributes.Add('DeliveryStatus', Format(OrderTrackingStatus."Delivery Status"));
         JObjAttributes.Add('DeliveryTrackingLink', Format(OrderTrackingStatus."Package Tracking URL"));
         JObjAttributes.Add(OrderTrackingStatus.Status + '_Date', Format(DT2Date(OrderTrackingStatus.SystemCreatedAt)));
+        JObjAttributes.Add('BulkyItem', IsBulkyItem(Item));
         JObjAction.Add('attributes', JObjAttributes.AsToken());
         JArrAction.Add(JObjAction);
         JObject.Add('actions', JArrAction);
@@ -227,6 +228,17 @@ codeunit 50046 "Moengage API Integration"
         OrderTrackingStatusMaster.SetRange("Status Type", OrderTrackingStatusMaster."Status Type"::Returned);
         if OrderTrackingStatusMaster.FindSet() then
             exit(true);
+    end;
+
+    local procedure IsBulkyItem(var Item: Record Item): text
+    var
+
+    begin
+        if Item."Special Equipment Code" <> '' then
+            exit('TRUE')
+        else
+            exit('FALSE')
+
     end;
 }
 
