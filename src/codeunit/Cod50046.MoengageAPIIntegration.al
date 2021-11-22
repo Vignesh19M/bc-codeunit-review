@@ -172,7 +172,8 @@ codeunit 50046 "Moengage API Integration"
             JObjectResErr.get('message', JTokenResErr);
             UpdateOrderTrackingStatus.Remarks := JTokenResErr.AsValue().AsText();
         end;
-        UpdateOrderTrackingStatus.Modify(false)
+        if UpdateOrderTrackingStatus.Modify(false) then
+            Commit(); //To update the intergation status immediate to avoid sending duplicate status.
     end;
 
     local procedure ReadJson(var JObject: JsonObject): text
