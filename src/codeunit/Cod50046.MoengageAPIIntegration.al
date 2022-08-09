@@ -73,6 +73,7 @@ codeunit 50046 "Moengage API Integration"
         JObjAttributes.Add('DeliveryTrackingLink', Format(OrderTrackingStatus."Package Tracking URL"));
         JObjAttributes.Add(OrderTrackingStatus.Status + '_Date', Format(DT2Date(OrderTrackingStatus.SystemCreatedAt)));
         JObjAttributes.Add('BulkyItem', IsBulkyItem(Item));
+        JObjAttributes.Add('SplitShipment', OrderTrackingStatus.SplitShipment);
         JObjAction.Add('attributes', JObjAttributes.AsToken());
         JArrAction.Add(JObjAction);
         JObject.Add('actions', JArrAction);
@@ -245,5 +246,6 @@ codeunit 50046 "Moengage API Integration"
             exit('FALSE')
 
     end;
+
 }
 
