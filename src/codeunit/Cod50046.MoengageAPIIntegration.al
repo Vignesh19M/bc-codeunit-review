@@ -73,6 +73,7 @@ codeunit 50046 "Moengage API Integration"
         JObjAttributes.Add('DeliveryTrackingLink', Format(OrderTrackingStatus."Package Tracking URL"));
         JObjAttributes.Add(OrderTrackingStatus.Status + '_Date', Format(DT2Date(OrderTrackingStatus.SystemCreatedAt)));
         JObjAttributes.Add('BulkyItem', IsBulkyItem(Item));
+        JObjAttributes.Add('SplitShipment', IsSplitshipment());
         JObjAction.Add('attributes', JObjAttributes.AsToken());
         JArrAction.Add(JObjAction);
         JObject.Add('actions', JArrAction);
@@ -245,5 +246,17 @@ codeunit 50046 "Moengage API Integration"
             exit('FALSE')
 
     end;
+
+    local procedure IsSplitshipment(): text
+    var
+
+    begin
+        if OrderTrackingStatus.SplitShipment then
+            exit('TRUE')
+        else
+            exit('FALSE')
+
+    end;
+
 }
 
