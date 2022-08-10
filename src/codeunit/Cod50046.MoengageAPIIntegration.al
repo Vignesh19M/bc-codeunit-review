@@ -63,6 +63,7 @@ codeunit 50046 "Moengage API Integration"
         JObjAttributes.Add('TotalLineQty', Format(OrderTrackingStatus."Total Line Qty."));
         JObjAttributes.Add('TotalProcessedQty', Format(OrderTrackingStatus."Total Processed Qty."));
         JObjAttributes.Add('TotalOrderQty', Format(OrderTrackingStatus."Total Order Qty."));
+        JObjAttributes.Add('TotalAggregatedQty', Format(OrderTrackingStatus."Total aggregated Qty."));
         JObjAttributes.Add('ProductPrice', Format(OrderTrackingStatus."Product Price"));
         JObjAttributes.Add('OrderAmount', Format(OrderTrackingStatus."Order Amount"));
         JObjAttributes.Add('OrderDiscountAmount', Format(OrderTrackingStatus."Order Discount Amount"));
