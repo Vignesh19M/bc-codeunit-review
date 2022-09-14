@@ -67,6 +67,7 @@ codeunit 50046 "Moengage API Integration"
         JObjAttributes.Add('TotalLineQty', Format(OrderTrackingStatus."Total Line Qty."));
         JObjAttributes.Add('TotalProcessedQty', Format(OrderTrackingStatus."Total Processed Qty."));
         JObjAttributes.Add('TotalOrderQty', Format(OrderTrackingStatus."Total Order Qty."));
+        JObjAttributes.Add('TotalAggregatedQty', Format(OrderTrackingStatus."Total aggregated Qty."));
         JObjAttributes.Add('ProductPrice', Format(OrderTrackingStatus."Product Price"));
         JObjAttributes.Add('OrderAmount', Format(OrderTrackingStatus."Order Amount"));
         JObjAttributes.Add('OrderDiscountAmount', Format(OrderTrackingStatus."Order Discount Amount"));
@@ -77,6 +78,7 @@ codeunit 50046 "Moengage API Integration"
         JObjAttributes.Add('DeliveryTrackingLink', Format(OrderTrackingStatus."Package Tracking URL"));
         JObjAttributes.Add(OrderTrackingStatus.Status + '_Date', Format(DT2Date(OrderTrackingStatus.SystemCreatedAt)));
         JObjAttributes.Add('BulkyItem', IsBulkyItem(Item));
+        JObjAttributes.Add('SplitShipment', IsSplitshipment());
         JObjAction.Add('attributes', JObjAttributes.AsToken());
         JArrAction.Add(JObjAction);
         JObject.Add('actions', JArrAction);
@@ -263,5 +265,17 @@ codeunit 50046 "Moengage API Integration"
             exit('FALSE')
 
     end;
+
+    local procedure IsSplitshipment(): text
+    var
+
+    begin
+        if OrderTrackingStatus.SplitShipment then
+            exit('TRUE')
+        else
+            exit('FALSE')
+
+    end;
+
 }
 
