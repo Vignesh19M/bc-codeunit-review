@@ -18,8 +18,7 @@ codeunit 50046 "Moengage API Integration"
         OrderTrackingStatus.SetFilter("Integrtation Status", '%1|%2', '', 'FAIL');
         if OrderTrackingStatus.FindSet() then
             repeat
-
-                if (IsStatusEnabled) and (IfHistoryExist = false) then
+                if IsStatusEnabled then
                     OrderTrackingStatusToMoengaeAPI();
             until OrderTrackingStatus.Next() = 0;
 
@@ -32,25 +31,6 @@ codeunit 50046 "Moengage API Integration"
         AzadeaSetup: Record "Azadea Setup";
         OrderTrackingStatus: Record "Order Tracking Status";
         OrderTrackingStatusMaster: Record "Order Tracking Status Master";
-
-    local procedure IfHistoryExist(): Boolean
-    var
-        OrderTrackingStatusHistory: Record "Order Tracking Status History";
-    begin
-        OrderTrackingStatusHistory.Reset;
-        OrderTrackingStatusHistory.SetCurrentKey("Document No.", "Item No.", "Variant Code", "Bin Code", Status);
-        OrderTrackingStatusHistory.SetRange("Document No.", OrderTrackingStatus."Document No.");
-        OrderTrackingStatusHistory.SetRange("Item No.", OrderTrackingStatus."Item No.");
-        OrderTrackingStatusHistory.SetRange("Variant Code", OrderTrackingStatus."Variant Code");
-        OrderTrackingStatusHistory.SetRange("Bin Code", OrderTrackingStatus."Bin Code");
-        OrderTrackingStatusHistory.SetRange(Status, OrderTrackingStatus.Status);
-        if OrderTrackingStatusHistory.FindSet() then begin
-            OrderTrackingStatus.Delete();
-            exit(true);
-        end;
-        exit(false);
-
-    end;
 
     local procedure IsStatusEnabled(): Boolean
     var
