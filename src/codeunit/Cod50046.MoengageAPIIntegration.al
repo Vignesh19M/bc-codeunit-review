@@ -10,6 +10,10 @@ codeunit 50046 "Moengage API Integration"
             exit;
         AzadeaSetup.TestField("Moengage API Key");
         AzadeaSetup.TestField("Moengage API URL");
+
+        if Format(AzadeaSetup."Dont Send Events Older than") > '' then
+            IgnoreOldEvents();
+
         OrderTrackingStatus.Reset();
         OrderTrackingStatus.SetFilter("Integrtation Status", '%1|%2', '', 'FAIL');
         if OrderTrackingStatus.FindSet() then
@@ -204,7 +208,7 @@ codeunit 50046 "Moengage API Integration"
         OrderTrackStatusHistory: Record "Order Tracking Status History";
     begin
         OrderTrackStatus.Reset();
-        orderTrackStatus.SetFilter("Integrtation Status", 'SUCCESS');
+        orderTrackStatus.SetFilter("Integrtation Status", '%1|%2', 'SUCCESS', 'MANUALIGNORE');
         if orderTrackStatus.Findset() then
             repeat
                 OrderTrackStatusHistory.TransferFields(orderTrackStatus);
@@ -212,6 +216,20 @@ codeunit 50046 "Moengage API Integration"
                 if OrderTrackStatusHistory.Insert() then
                     OrderTrackStatus.Delete();
             until orderTrackStatus.Next() = 0;
+    end;
+
+    local procedure IgnoreOldEvents()
+    var
+        OrderTrackStatus: Record "Order Tracking Status";
+        OrderTrackStatusHistory: Record "Order Tracking Status History";
+        FromDate: Date;
+    begin
+        FromDate := CalcDate(AzadeaSetup."Dont Send Events Older than", Today);
+        OrderTrackStatus.Reset();
+        OrderTrackStatus.Setfilter(SystemCreatedAt, '<%1', (CreateDateTime(FromDate, 0T)));
+        if orderTrackStatus.Findset() then
+            OrderTrackStatus.ModifyAll("Integrtation Status", 'MANUALIGNORE');
+        Commit();
     end;
 
     procedure ReCreateEntries(OrderTrackStatusHistory: Record "Order Tracking Status History")
