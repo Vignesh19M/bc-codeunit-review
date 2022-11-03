@@ -18,12 +18,10 @@ codeunit 50046 "Moengage API Integration"
         OrderTrackingStatus.SetFilter("Integrtation Status", '%1|%2', '', 'FAIL');
         if OrderTrackingStatus.FindSet() then
             repeat
-                if IsStatusEnabled then
+                if (IsStatusEnabled) then
                     OrderTrackingStatusToMoengaeAPI();
             until OrderTrackingStatus.Next() = 0;
-
         MoveSuccessStatusToHistoryTable();
-
     end;
 
 
