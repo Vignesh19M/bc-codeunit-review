@@ -13,6 +13,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         JSonPickUpAddressAttribute, PickupContactAttribute, PickupItemAttribute, ExistingShipmentsAttribute, ClientInfoAttributes : JsonObject;
         MergeAddressAndContact: JsonObject;
         PickupItemArray, ExistingShipmentsArray : JsonArray;
+        JsonValue: JsonValue;
     begin
         //PickupAddress
         JSonPickUpAddressAttribute.Add('Line1', 'TestAddres1');
@@ -24,26 +25,28 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         JSonPickUpAddressAttribute.Add('CountryCode', 'AE');
         JSonPickUpAddressAttribute.Add('Longitude', 0);
         JSonPickUpAddressAttribute.Add('Latitude', 0);
-        JSonPickUpAddressAttribute.Add('BuildingNumber', 'null');
-        JSonPickUpAddressAttribute.Add('BuildingName', 'null');
-        JSonPickUpAddressAttribute.Add('Floor', 'null');
-        JSonPickUpAddressAttribute.Add('Apartment', 'null');
-        JSonPickUpAddressAttribute.Add('POBox', 'null');
-        JSonPickUpAddressAttribute.Add('Description', 'null');
+        JsonValue.SetValueToNull();
+        JSonPickUpAddressAttribute.Add('BuildingNumber', JsonValue.AsToken());
+        JSonPickUpAddressAttribute.Add('BuildingName', JsonValue.AsToken());
+
+        JSonPickUpAddressAttribute.Add('Floor', JsonValue.AsToken());
+        JSonPickUpAddressAttribute.Add('Apartment', JsonValue.AsToken());
+        JSonPickUpAddressAttribute.Add('POBox', JsonValue.AsToken());
+        JSonPickUpAddressAttribute.Add('Description', JsonValue.AsToken());
 
         //PickupContact
         PickupContactAttribute.Add('Department', 'Test Department');
         PickupContactAttribute.Add('PersonName', 'Test Person Name');
-        PickupContactAttribute.Add('Title', 'null');
+        PickupContactAttribute.Add('Title', JsonValue.AsToken());
         PickupContactAttribute.Add('CompanyName', 'Test Person/Company Name');
         PickupContactAttribute.Add('PhoneNumber1', '97148707700');
-        PickupContactAttribute.Add('PhoneNumber1Ext', 'null');
-        PickupContactAttribute.Add('PhoneNumber2', 'null');
-        PickupContactAttribute.Add('PhoneNumber2Ext', 'null');
-        PickupContactAttribute.Add('FaxNumber', 'null');
+        PickupContactAttribute.Add('PhoneNumber1Ext', JsonValue.AsToken());
+        PickupContactAttribute.Add('PhoneNumber2', JsonValue.AsToken());
+        PickupContactAttribute.Add('PhoneNumber2Ext', JsonValue.AsToken());
+        PickupContactAttribute.Add('FaxNumber', JsonValue.AsToken());
         PickupContactAttribute.Add('CellPhone', '97148707700');
         PickupContactAttribute.Add('EmailAddress', 'pickupemail@test.com');
-        PickupContactAttribute.Add('Type', 'null');
+        PickupContactAttribute.Add('Type', JsonValue.AsToken());
 
         //PickupAddress &PickupContact -> MergeAddressAndContact 
         MergeAddressAndContact.Add('PickupAddress', JSonPickUpAddressAttribute);
@@ -57,8 +60,8 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         MergeAddressAndContact.Add('Comments', 'open ended field, pass awb and item description');
         MergeAddressAndContact.Add('Reference1', '5dff00be7ad4f30cd9c3119d');
         MergeAddressAndContact.Add('Reference2', 'test');
-        MergeAddressAndContact.Add('Vehicle', 'null');
-        MergeAddressAndContact.Add('Shipments', 'null');
+        MergeAddressAndContact.Add('Vehicle', JsonValue.AsToken());
+        MergeAddressAndContact.Add('Shipments', JsonValue.AsToken());
 
         //PickupItems as an array
         PickupItemAttribute.Add('ProductGroup', 'DOM');
@@ -66,12 +69,12 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         PickupItemAttribute.Add('NumberOfShipments', 1);
         PickupItemAttribute.Add('PackageType', 'item');
         PickupItemAttribute.Add('Payment', 'P');
-        PickupItemAttribute.Add('ShipmentWeight', 'null');
-        PickupItemAttribute.Add('ShipmentVolume', 'null');
+        PickupItemAttribute.Add('ShipmentWeight', JsonValue.AsToken());
+        PickupItemAttribute.Add('ShipmentVolume', JsonValue.AsToken());
         PickupItemAttribute.Add('NumberOfPieces', 1);
-        PickupItemAttribute.Add('CashAmount', 'null');
-        PickupItemAttribute.Add('ExtraCharges', 'null');
-        PickupItemAttribute.Add('ShipmentDimensions', 'null');
+        PickupItemAttribute.Add('CashAmount', JsonValue.AsToken());
+        PickupItemAttribute.Add('ExtraCharges', JsonValue.AsToken());
+        PickupItemAttribute.Add('ShipmentDimensions', JsonValue.AsToken());
         PickupItemAttribute.Add('Comments', 'no description');
         PickupItemArray.Add(PickupItemAttribute);
 
@@ -88,13 +91,13 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         //ExistingShipmentsArray -> MergeAddressAndContact
         MergeAddressAndContact.Add('ExistingShipments', ExistingShipmentsArray);
 
-        MergeAddressAndContact.Add('Branch', 'null');
-        MergeAddressAndContact.Add('RouteCode', 'null');
+        MergeAddressAndContact.Add('Branch', JsonValue.AsToken());
+        MergeAddressAndContact.Add('RouteCode', JsonValue.AsToken());
         MergeAddressAndContact.Add('Dispatcher', 0);
 
         //MergeAddressAndContact -> Pickup
         JsonPickUp.Add('Pickup', MergeAddressAndContact);
-        JsonPickUp.Add('LabelInfo', 'null');
+        JsonPickUp.Add('LabelInfo', JsonValue.AsToken());
 
         //ClientInfo
         ClientInfoAttributes.Add('UserName', 'testingapi@aramex.com');
@@ -105,11 +108,11 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         ClientInfoAttributes.Add('AccountEntity', 'DXB');
         ClientInfoAttributes.Add('AccountCountryCode', 'AE');
         ClientInfoAttributes.Add('Source', 24);
-        ClientInfoAttributes.Add('PreferredLanguageCode', 'null');
+        ClientInfoAttributes.Add('PreferredLanguageCode', JsonValue.AsToken());
 
         //ClientInfoAttributes - > JsonPickUp
         JsonPickUp.Add('ClientInfo', ClientInfoAttributes);
-        JsonPickUp.Add('Transaction', 'null');
+        JsonPickUp.Add('Transaction', JsonValue.AsToken());
 
         Message(Format(JsonPickUp));
     end;
