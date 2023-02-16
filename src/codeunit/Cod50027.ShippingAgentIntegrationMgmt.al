@@ -14,6 +14,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         MergeAddressAndContact: JsonObject;
         PickupItemArray, ExistingShipmentsArray : JsonArray;
         JsonValue: JsonValue;
+        DateTimeString: Label '/Date(%1)/';
     begin
         //PickupAddress
         JSonPickUpAddressAttribute.Add('Line1', 'TestAddres1');
@@ -53,8 +54,12 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         MergeAddressAndContact.Add('PickupContact', PickupContactAttribute);
 
         MergeAddressAndContact.Add('PickupLocation', 'Reception');
-        MergeAddressAndContact.Add('PickupDate', '/Date(1676363400000)/');
-        MergeAddressAndContact.Add('ReadyTime', '/Date(1676379600000)/');
+
+        message(Format((GetUnixTimeStamp(CurrentDateTime))));
+
+        MergeAddressAndContact.Add('PickupDate', StrSubstNo(DateTimeString, GetUnixTimeStamp(CurrentDateTime)));
+        MergeAddressAndContact.Add('ReadyTime', StrSubstNo(DateTimeString, GetUnixTimeStamp(CurrentDateTime + 1)));
+        //MergeAddressAndContact.Add('ReadyTime', '/Date(1676379600000)/');
         MergeAddressAndContact.Add('LastPickupTime', '/Date(1676386800000)/');
         MergeAddressAndContact.Add('ClosingTime', '/Date(1676386800000)/');
         MergeAddressAndContact.Add('Comments', 'open ended field, pass awb and item description');
@@ -115,5 +120,17 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         JsonPickUp.Add('Transaction', JsonValue.AsToken());
 
         Message(Format(JsonPickUp));
+    end;
+
+    procedure GetUnixTimeStamp(FromDateTime: DateTime): Decimal
+    var
+        TypeHelper: Codeunit "Type Helper";
+        OriginDateTime: DateTime;
+        TimeZoneOffset: Duration;
+    begin
+        TypeHelper.GetUserTimezoneOffset(TimeZoneOffset);
+        OriginDateTime := System.CreateDateTime(DMY2Date(1, 1, 1970), 0T);
+        OriginDateTime := OriginDateTime + TimeZoneOffset;
+        exit(FromDateTime - OriginDateTime);
     end;
 }
