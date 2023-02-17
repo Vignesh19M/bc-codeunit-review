@@ -73,6 +73,7 @@ codeunit 50046 "Moengage API Integration"
         JObjAttributes.Add('ShippingAddress', GetCustomerAddress(OrderTrackingStatus."Document No.", false, true));
         JObjAttributes.Add('BillingAddress', GetCustomerAddress(OrderTrackingStatus."Document No.", true, false));
         JObjAttributes.Add('DeliveryStatus', Format(OrderTrackingStatus."Delivery Status"));
+        JObjAttributes.Add('AzadeaDeliveryStatus', Format(OrderTrackingStatus."Azadea Status"));
         JObjAttributes.Add('DeliveryTrackingLink', Format(OrderTrackingStatus."Package Tracking URL"));
         JObjAttributes.Add(OrderTrackingStatus.Status + '_Date', Format(DT2Date(OrderTrackingStatus.SystemCreatedAt)));
         JObjAttributes.Add('BulkyItem', IsBulkyItem(Item));
