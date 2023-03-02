@@ -4,6 +4,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
     var
 
     begin
+        SAS.get('ARAMEX', 'ARAMEX RET');
         BuildCreatePickupJson();
     end;
 
@@ -56,6 +57,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         MergeAddressAndContact.Add('PickupLocation', 'Reception');
 
         message(Format((GetUnixTimeStamp(CurrentDateTime))));
+        if System.Time > SAS."Cut Off End Time" then;
 
         MergeAddressAndContact.Add('PickupDate', StrSubstNo(DateTimeString, GetUnixTimeStamp(CurrentDateTime)));
         MergeAddressAndContact.Add('ReadyTime', StrSubstNo(DateTimeString, GetUnixTimeStamp(CurrentDateTime + 1)));
@@ -133,4 +135,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         OriginDateTime := OriginDateTime + TimeZoneOffset;
         exit(FromDateTime - OriginDateTime);
     end;
+
+    var
+        SAS: Record "Shipping Agent Services";
 }
