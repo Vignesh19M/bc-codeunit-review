@@ -4,7 +4,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
     var
 
     begin
-        SAS.get('ARAMEX', 'ARAMEX RET');
+        ShippingAgentService.get('ARAMEX', 'ARAMEX RET');
         BuildCreatePickupJson();
     end;
 
@@ -16,11 +16,12 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         PickupItemArray, ExistingShipmentsArray : JsonArray;
         JsonValue: JsonValue;
         DateTimeString: Label '/Date(%1)/';
+
     begin
         //PickupAddress
-        JSonPickUpAddressAttribute.Add('Line1', 'TestAddres1');
-        JSonPickUpAddressAttribute.Add('Line2', 'Test Address Line 2');
-        JSonPickUpAddressAttribute.Add('Line3', '');
+        JSonPickUpAddressAttribute.Add('Line1', 'TestAddres03');
+        JSonPickUpAddressAttribute.Add('Line2', 'Test Address Line 04');
+        JSonPickUpAddressAttribute.Add('Line3', '05');
         JSonPickUpAddressAttribute.Add('City', 'Dubai');
         JSonPickUpAddressAttribute.Add('StateOrProvinceCode', 'Dubai');
         JSonPickUpAddressAttribute.Add('PostCode', '');
@@ -53,17 +54,16 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         //PickupAddress &PickupContact -> MergeAddressAndContact 
         MergeAddressAndContact.Add('PickupAddress', JSonPickUpAddressAttribute);
         MergeAddressAndContact.Add('PickupContact', PickupContactAttribute);
-
         MergeAddressAndContact.Add('PickupLocation', 'Reception');
 
-        message(Format((GetUnixTimeStamp(CurrentDateTime))));
-        if System.Time > SAS."Cut Off End Time" then;
+        GetPickUpReadyDateTime();
 
-        MergeAddressAndContact.Add('PickupDate', StrSubstNo(DateTimeString, GetUnixTimeStamp(CurrentDateTime)));
-        MergeAddressAndContact.Add('ReadyTime', StrSubstNo(DateTimeString, GetUnixTimeStamp(CurrentDateTime + 1)));
+        //  message(Format(Format((GetUnixTimeStamp(CurrentDateTime)), 0, 1)));
+        MergeAddressAndContact.Add('PickupDate', StrSubstNo(DateTimeString, Format((GetUnixTimeStamp(PickUpReadyDTTime)), 0, 1)));
+        MergeAddressAndContact.Add('ReadyTime', StrSubstNo(DateTimeString, Format((GetUnixTimeStamp(PickUpReadyDTTime)), 0, 1)));
         //MergeAddressAndContact.Add('ReadyTime', '/Date(1676379600000)/');
-        MergeAddressAndContact.Add('LastPickupTime', '/Date(1676386800000)/');
-        MergeAddressAndContact.Add('ClosingTime', '/Date(1676386800000)/');
+        MergeAddressAndContact.Add('LastPickupTime', StrSubstNo(DateTimeString, Format((GetUnixTimeStamp(LastPickupClosingTime)), 0, 1)));
+        MergeAddressAndContact.Add('ClosingTime', StrSubstNo(DateTimeString, Format((GetUnixTimeStamp(LastPickupClosingTime)), 0, 1)));
         MergeAddressAndContact.Add('Comments', 'open ended field, pass awb and item description');
         MergeAddressAndContact.Add('Reference1', '5dff00be7ad4f30cd9c3119d');
         MergeAddressAndContact.Add('Reference2', 'test');
@@ -107,13 +107,14 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         JsonPickUp.Add('LabelInfo', JsonValue.AsToken());
 
         //ClientInfo
-        ClientInfoAttributes.Add('UserName', 'testingapi@aramex.com');
-        ClientInfoAttributes.Add('Password', 'R123456789$r');
+        ShippingAgent.Get(ShippingAgentService."Shipping Agent Code");
+        ClientInfoAttributes.Add('UserName', format(ShippingAgent.UserName));
+        ClientInfoAttributes.Add('Password', Format(ShippingAgent.Password));
         ClientInfoAttributes.Add('Version', 'v1.0');
-        ClientInfoAttributes.Add('AccountNumber', '45796');
-        ClientInfoAttributes.Add('AccountPin', '116216');
-        ClientInfoAttributes.Add('AccountEntity', 'DXB');
-        ClientInfoAttributes.Add('AccountCountryCode', 'AE');
+        ClientInfoAttributes.Add('AccountNumber', Format(ShippingAgent."Account No."));
+        ClientInfoAttributes.Add('AccountPin', Format(ShippingAgent."Account Pin"));
+        ClientInfoAttributes.Add('AccountEntity', Format(ShippingAgent."Account Entity"));
+        ClientInfoAttributes.Add('AccountCountryCode', Format(CompanyInformation."Country/Region Code"));
         ClientInfoAttributes.Add('Source', 24);
         ClientInfoAttributes.Add('PreferredLanguageCode', JsonValue.AsToken());
 
@@ -122,6 +123,8 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         JsonPickUp.Add('Transaction', JsonValue.AsToken());
 
         Message(Format(JsonPickUp));
+        SendJsonData(JsonPickUp);
+
     end;
 
     procedure GetUnixTimeStamp(FromDateTime: DateTime): Decimal
@@ -136,6 +139,105 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         exit(FromDateTime - OriginDateTime);
     end;
 
+    procedure GetPickUpReadyDateTime()
     var
-        SAS: Record "Shipping Agent Services";
+        ReadyTime: Time;
+        WorkingDay: Boolean;
+        PickupDate: Date;
+
+    begin
+        LastPickupClosingTime := 0DT;
+        PickUpReadyDTTime := 0DT;
+
+        CompanyInformation.Get();
+        CompanyInformation."Base Calendar Code" := ShippingAgentService."Base Calendar Code";
+        CalendarManagement.SetSource(CompanyInformation, CustomizedCalendarChange);
+
+        ReadyTime := System.Time + 3600000;
+        PickupDate := Today;
+
+        if ReadyTime >= ShippingAgentService."Cut Off End Time" then
+            PickupDate += 1;
+
+        repeat
+            if not CalendarManagement.IsNonworkingDay(PickupDate, CustomizedCalendarChange) then
+                WorkingDay := true
+            else
+                PickupDate += 1;
+        until WorkingDay = true;
+        // Message(Format(PickupDate));
+        if PickupDate > Today then
+            PickUpReadyDTTime := System.CreateDateTime(PickupDate, ShippingAgentService."Cut Off Start Time");
+
+        if (format(PickUpReadyDTTime) = '') then begin
+            if (ReadyTime < ShippingAgentService."Cut Off End Time") and (ReadyTime > ShippingAgentService."Cut Off Start Time") then
+                PickUpReadyDTTime := System.CreateDateTime(PickupDate, ReadyTime)
+            else
+                if ReadyTime < ShippingAgentService."Cut Off Start Time" then
+                    PickUpReadyDTTime := System.CreateDateTime(PickupDate, ShippingAgentService."Cut Off Start Time");
+        end;
+        LastPickupClosingTime := System.CreateDateTime(PickupDate, ShippingAgentService."Cut Off End Time");
+    end;
+
+    local procedure SendJsonData(var JsonPickUp: JsonObject)
+    var
+        Clients: HttpClient;
+        RequestContents: HttpContent;
+        HttpReqMeesage: HttpRequestMessage;
+        Response: HttpResponseMessage;
+        Contents: HttpContent;
+        contentHeaders: HttpHeaders;
+        Result: text;
+        Output: text;
+    begin
+        RequestContents.WriteFrom(ReadJson(JsonPickUp));
+
+        Contents.WriteFrom(ReadJson(JsonPickUp));
+        HttpReqMeesage.Content := Contents;
+
+
+        HttpReqMeesage.Method := 'POST';
+        HttpReqMeesage.SetRequestUri(ShippingAgentService."Service URL");
+
+        HttpReqMeesage.GetHeaders(contentHeaders);
+        contentHeaders.Clear();
+        contentHeaders.Add('Content-Type', 'application/json');
+
+
+        Clients.send(HttpReqMeesage, Response);
+        // Clients.Post(ShippingAgentService."Service URL", RequestContents, Response);
+        Response.Content.ReadAs(Result);
+        // if Response.IsSuccessStatusCode then begin
+        Contents := Response.Content;
+        Response.Content.ReadAs(Result);
+        Message(Result);
+        // end else
+        //Message('Response negative %1 %2', Response.HttpStatusCode, Response.ReasonPhrase);
+        //Contents.ReadAs(Output);
+    end;
+
+    local procedure ReadJson(var JObject: JsonObject): text
+    var
+        InStr: InStream;
+        OutStr: OutStream;
+        TempBlob: Codeunit "Temp Blob";
+        Result: text;
+    begin
+        TempBlob.CreateInStream(InStr);
+        TempBlob.CreateOutStream(OutStr);
+        JObject.WriteTo(OutStr);
+        OutStr.WriteText(Result);
+        InStr.ReadText(Result);
+        //  Message(Result); //Constructed Json
+        exit(Result);
+    end;
+
+    var
+        ShippingAgentService: Record "Shipping Agent Services";
+        ShippingAgent: Record "Shipping Agent";
+        CustomizedCalendarChange: Record "Customized Calendar Change";
+        CalendarManagement: Codeunit "Calendar Management";
+        CompanyInformation: Record "Company Information";
+        PickUpReadyDTTime: DateTime;
+        LastPickupClosingTime: DateTime;
 }
