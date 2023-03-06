@@ -19,9 +19,9 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
 
     begin
         //PickupAddress
-        JSonPickUpAddressAttribute.Add('Line1', 'TestAddres03');
-        JSonPickUpAddressAttribute.Add('Line2', 'Test Address Line 04');
-        JSonPickUpAddressAttribute.Add('Line3', '05');
+        JSonPickUpAddressAttribute.Add('Line1', 'TestAddres09');
+        JSonPickUpAddressAttribute.Add('Line2', 'Test Address Line 09');
+        JSonPickUpAddressAttribute.Add('Line3', '009');
         JSonPickUpAddressAttribute.Add('City', 'Dubai');
         JSonPickUpAddressAttribute.Add('StateOrProvinceCode', 'Dubai');
         JSonPickUpAddressAttribute.Add('PostCode', '');
@@ -65,8 +65,8 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         MergeAddressAndContact.Add('LastPickupTime', StrSubstNo(DateTimeString, Format((GetUnixTimeStamp(LastPickupClosingTime)), 0, 1)));
         MergeAddressAndContact.Add('ClosingTime', StrSubstNo(DateTimeString, Format((GetUnixTimeStamp(LastPickupClosingTime)), 0, 1)));
         MergeAddressAndContact.Add('Comments', 'open ended field, pass awb and item description');
-        MergeAddressAndContact.Add('Reference1', '5dff00be7ad4f30cd9c3119d');
-        MergeAddressAndContact.Add('Reference2', 'test');
+        MergeAddressAndContact.Add('Reference1', '5dff00be7ad4f30cd9c3119d123');
+        MergeAddressAndContact.Add('Reference2', 'test123');
         MergeAddressAndContact.Add('Vehicle', JsonValue.AsToken());
         MergeAddressAndContact.Add('Shipments', JsonValue.AsToken());
 
@@ -182,38 +182,27 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
     local procedure SendJsonData(var JsonPickUp: JsonObject)
     var
         Clients: HttpClient;
-        RequestContents: HttpContent;
-        HttpReqMeesage: HttpRequestMessage;
+        HttpReqMessage: HttpRequestMessage;
         Response: HttpResponseMessage;
         Contents: HttpContent;
         contentHeaders: HttpHeaders;
         Result: text;
-        Output: text;
     begin
-        RequestContents.WriteFrom(ReadJson(JsonPickUp));
-
         Contents.WriteFrom(ReadJson(JsonPickUp));
-        HttpReqMeesage.Content := Contents;
 
-
-        HttpReqMeesage.Method := 'POST';
-        HttpReqMeesage.SetRequestUri(ShippingAgentService."Service URL");
-
-        HttpReqMeesage.GetHeaders(contentHeaders);
+        Contents.GetHeaders(contentHeaders);
         contentHeaders.Clear();
         contentHeaders.Add('Content-Type', 'application/json');
 
+        HttpReqMessage.Content := Contents;
+        HttpReqMessage.SetRequestUri(ShippingAgentService."Service URL");
+        HttpReqMessage.Method := 'POST';
 
-        Clients.send(HttpReqMeesage, Response);
-        // Clients.Post(ShippingAgentService."Service URL", RequestContents, Response);
+        Clients.send(HttpReqMessage, Response);
         Response.Content.ReadAs(Result);
-        // if Response.IsSuccessStatusCode then begin
-        Contents := Response.Content;
-        Response.Content.ReadAs(Result);
-        Message(Result);
-        // end else
-        //Message('Response negative %1 %2', Response.HttpStatusCode, Response.ReasonPhrase);
-        //Contents.ReadAs(Output);
+        StoreRespose(Result);
+        //Message(Result);
+
     end;
 
     local procedure ReadJson(var JObject: JsonObject): text
@@ -230,6 +219,49 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         InStr.ReadText(Result);
         //  Message(Result); //Constructed Json
         exit(Result);
+    end;
+
+    local procedure StoreRespose(var Result: Text)
+    var
+        JSONManagement: Codeunit "JSON Management";
+        ProcessedPickup, NotificationsJsonArray : text;
+        NotificationsJMgmnt, ProcessedPickupJMgmnt : Codeunit "JSON Management";
+        NotificationsJObject: JsonObject;
+        ErrCode, NotificationMsg : text;
+
+        i: Integer;
+        ResponseID, ResponseGUID, ResponseRef1, ResponseRef2 : text;
+        SalesHeader: Record "Sales Header";
+        AirwayBill: Record "Airway Bill";
+        BigText: BigText;
+    begin
+        JSONManagement.InitializeObject(Result);
+        if JSONManagement.GetArrayPropertyValueAsStringByName('Notifications', NotificationsJsonArray) then begin
+            NotificationsJMgmnt.InitializeCollection(NotificationsJsonArray);
+
+            for i := 0 to NotificationsJMgmnt.GetCollectionCount() - 1 do begin
+                NotificationsJMgmnt.GetObjectFromCollectionByIndex(NotificationsJsonArray, i);
+                NotificationsJMgmnt.InitializeObject(NotificationsJsonArray);
+                NotificationsJMgmnt.GetStringPropertyValueByName('Code', ErrCode);
+                NotificationsJMgmnt.GetStringPropertyValueByName('Message', NotificationMsg);
+            end;
+        end;
+
+
+
+        if JSONManagement.GetArrayPropertyValueAsStringByName('ProcessedPickup', ProcessedPickup) then begin
+            ProcessedPickupJMgmnt.InitializeObject(ProcessedPickup);
+            ProcessedPickupJMgmnt.GetStringPropertyValueByName('ID', ResponseID);
+            ProcessedPickupJMgmnt.GetStringPropertyValueByName('GUID', ResponseGUID);
+            ProcessedPickupJMgmnt.GetStringPropertyValueByName('Reference1', ResponseRef1);
+            ProcessedPickupJMgmnt.GetStringPropertyValueByName('Reference2', ResponseRef2);
+
+            // AirwayBill.SetRange("Source No.",);
+            if not AirwayBill.FindSet() then
+                AirwayBill.InsertPackageNew(37, SalesHeader."Document Type"::"Return Order", ResponseRef2, 1000, ResponseID,
+                                            ResponseGUID, AirwayBill."Line Type"::"Airway Bill", '', BigText, ResponseID,
+                                            '', ShippingAgent.Code, '', '', 0, '');
+        end;
     end;
 
     var
