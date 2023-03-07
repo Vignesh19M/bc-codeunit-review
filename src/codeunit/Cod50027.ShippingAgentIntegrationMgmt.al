@@ -19,9 +19,9 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
 
     begin
         //PickupAddress
-        JSonPickUpAddressAttribute.Add('Line1', 'TestAddres09');
-        JSonPickUpAddressAttribute.Add('Line2', 'Test Address Line 09');
-        JSonPickUpAddressAttribute.Add('Line3', '009');
+        JSonPickUpAddressAttribute.Add('Line1', 'TestAddres11');
+        JSonPickUpAddressAttribute.Add('Line2', 'Test Address Line 11');
+        JSonPickUpAddressAttribute.Add('Line3', '011');
         JSonPickUpAddressAttribute.Add('City', 'Dubai');
         JSonPickUpAddressAttribute.Add('StateOrProvinceCode', 'Dubai');
         JSonPickUpAddressAttribute.Add('PostCode', '');
@@ -217,7 +217,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         JObject.WriteTo(OutStr);
         OutStr.WriteText(Result);
         InStr.ReadText(Result);
-        //  Message(Result); //Constructed Json
+        //Message(Result); //Constructed Json
         exit(Result);
     end;
 
@@ -227,12 +227,13 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         ProcessedPickup, NotificationsJsonArray : text;
         NotificationsJMgmnt, ProcessedPickupJMgmnt : Codeunit "JSON Management";
         NotificationsJObject: JsonObject;
-        ErrCode, NotificationMsg : text;
+        ErrCode, NotificationMsg, HasErrors : text;
         i: Integer;
         ResponseID, ResponseGUID, ResponseRef1, ResponseRef2 : text;
         SalesHeader: Record "Sales Header";
         AirwayBill: Record "Airway Bill";
         BigText: BigText;
+        AramexError: Label '%1 : %2 - %3';
     begin
         JSONManagement.InitializeObject(Result);
         if JSONManagement.GetArrayPropertyValueAsStringByName('Notifications', NotificationsJsonArray) then begin
@@ -246,6 +247,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
             end;
         end;
 
+        JSONManagement.GetArrayPropertyValueAsStringByName('HasErrors', HasErrors);
 
         if JSONManagement.GetArrayPropertyValueAsStringByName('ProcessedPickup', ProcessedPickup) then begin
             ProcessedPickupJMgmnt.InitializeObject(ProcessedPickup);
@@ -254,11 +256,16 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
             ProcessedPickupJMgmnt.GetStringPropertyValueByName('Reference1', ResponseRef1);
             ProcessedPickupJMgmnt.GetStringPropertyValueByName('Reference2', ResponseRef2);
 
-            // AirwayBill.SetRange("Source No.",);
-            if not AirwayBill.FindSet() then
-                AirwayBill.InsertPackageNew(37, SalesHeader."Document Type"::"Return Order", ResponseRef2, 1000, ResponseID,
-                                            ResponseGUID, AirwayBill."Line Type"::"Airway Bill", '', BigText, ResponseID,
-                                            '', ShippingAgent.Code, '', '', 0, '');
+
+            if (HasErrors = 'True') and (ResponseID <> '') or (HasErrors = 'False') then begin
+                AirwayBill.SetRange("No.", ResponseID);
+                if not AirwayBill.FindSet() then
+                    AirwayBill.InsertPackageNew(37, SalesHeader."Document Type"::"Return Order", ResponseRef2, 1000, ResponseID,
+                                                ResponseGUID, AirwayBill."Line Type"::"Airway Bill", '', BigText, ResponseID,
+                                                '', ShippingAgent.Code, '', '', 0, '');
+            end else
+                Error(AramexError, ShippingAgent.Code, ErrCode, NotificationMsg);
+
         end;
     end;
 
