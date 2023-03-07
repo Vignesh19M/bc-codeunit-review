@@ -228,7 +228,6 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         NotificationsJMgmnt, ProcessedPickupJMgmnt : Codeunit "JSON Management";
         NotificationsJObject: JsonObject;
         ErrCode, NotificationMsg : text;
-
         i: Integer;
         ResponseID, ResponseGUID, ResponseRef1, ResponseRef2 : text;
         SalesHeader: Record "Sales Header";
@@ -246,7 +245,6 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
                 NotificationsJMgmnt.GetStringPropertyValueByName('Message', NotificationMsg);
             end;
         end;
-
 
 
         if JSONManagement.GetArrayPropertyValueAsStringByName('ProcessedPickup', ProcessedPickup) then begin
