@@ -4,11 +4,11 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
     var
 
     begin
-        ShippingAgentService.get('ARAMEX', 'ARAMEX RET');
-        BuildCreatePickupJson();
+        //ShippingAgentService.get('ARAMEX', 'ARAMEX RET');
+        //CreatePickup();
     end;
 
-    local procedure BuildCreatePickupJson()
+    procedure CreatePickup(Var pSalesHeader: Record "Sales Header"; var ShippingAgentServices: Record "Shipping Agent Services")
     var
         JsonPickUp: JsonObject;
         JSonPickUpAddressAttribute, PickupContactAttribute, PickupItemAttribute, ExistingShipmentsAttribute, ClientInfoAttributes : JsonObject;
@@ -16,16 +16,21 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         PickupItemArray, ExistingShipmentsArray : JsonArray;
         JsonValue: JsonValue;
         DateTimeString: Label '/Date(%1)/';
-
+        OrginalOrderNo: Label 'Orginal Order No : %1';
     begin
+        SalesHeader := pSalesHeader;
+        ShippingAgentService := ShippingAgentServices;
+        ShippingAgent.Get(ShippingAgentService."Shipping Agent Code");
+        GetCommunicationAddress(SalesHeader);
         //PickupAddress
-        JSonPickUpAddressAttribute.Add('Line1', 'TestAddres11');
-        JSonPickUpAddressAttribute.Add('Line2', 'Test Address Line 11');
-        JSonPickUpAddressAttribute.Add('Line3', '011');
-        JSonPickUpAddressAttribute.Add('City', 'Dubai');
-        JSonPickUpAddressAttribute.Add('StateOrProvinceCode', 'Dubai');
+        JSonPickUpAddressAttribute.Add('Line1', PickupAddress.Get(1));
+        JSonPickUpAddressAttribute.Add('Line2', PickupAddress.Get(2));
+
+        JSonPickUpAddressAttribute.Add('Line3', '');
+        JSonPickUpAddressAttribute.Add('City', PickupAddress.Get(3));
+        JSonPickUpAddressAttribute.Add('StateOrProvinceCode', PickupAddress.Get(3));
         JSonPickUpAddressAttribute.Add('PostCode', '');
-        JSonPickUpAddressAttribute.Add('CountryCode', 'AE');
+        JSonPickUpAddressAttribute.Add('CountryCode', PickupAddress.Get(4));
         JSonPickUpAddressAttribute.Add('Longitude', 0);
         JSonPickUpAddressAttribute.Add('Latitude', 0);
         JsonValue.SetValueToNull();
@@ -38,35 +43,35 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         JSonPickUpAddressAttribute.Add('Description', JsonValue.AsToken());
 
         //PickupContact
-        PickupContactAttribute.Add('Department', 'Test Department');
-        PickupContactAttribute.Add('PersonName', 'Test Person Name');
+        PickupContactAttribute.Add('Department', '');
+        PickupContactAttribute.Add('PersonName', PickupAddress.Get(5));
         PickupContactAttribute.Add('Title', JsonValue.AsToken());
-        PickupContactAttribute.Add('CompanyName', 'Test Person/Company Name');
-        PickupContactAttribute.Add('PhoneNumber1', '97148707700');
+        PickupContactAttribute.Add('CompanyName', '');
+        PickupContactAttribute.Add('PhoneNumber1', PickupAddress.Get(6));
         PickupContactAttribute.Add('PhoneNumber1Ext', JsonValue.AsToken());
         PickupContactAttribute.Add('PhoneNumber2', JsonValue.AsToken());
         PickupContactAttribute.Add('PhoneNumber2Ext', JsonValue.AsToken());
         PickupContactAttribute.Add('FaxNumber', JsonValue.AsToken());
-        PickupContactAttribute.Add('CellPhone', '97148707700');
-        PickupContactAttribute.Add('EmailAddress', 'pickupemail@test.com');
+        PickupContactAttribute.Add('CellPhone', PickupAddress.Get(7));
+        PickupContactAttribute.Add('EmailAddress', PickupAddress.Get(8));
         PickupContactAttribute.Add('Type', JsonValue.AsToken());
 
         //PickupAddress &PickupContact -> MergeAddressAndContact 
         MergeAddressAndContact.Add('PickupAddress', JSonPickUpAddressAttribute);
         MergeAddressAndContact.Add('PickupContact', PickupContactAttribute);
-        MergeAddressAndContact.Add('PickupLocation', 'Reception');
+        MergeAddressAndContact.Add('PickupLocation', '');//Reception
 
         GetPickUpReadyDateTime();
 
-        //  message(Format(Format((GetUnixTimeStamp(CurrentDateTime)), 0, 1)));
+        //message(Format(Format((GetUnixTimeStamp(CurrentDateTime)), 0, 1)));
         MergeAddressAndContact.Add('PickupDate', StrSubstNo(DateTimeString, Format((GetUnixTimeStamp(PickUpReadyDTTime)), 0, 1)));
         MergeAddressAndContact.Add('ReadyTime', StrSubstNo(DateTimeString, Format((GetUnixTimeStamp(PickUpReadyDTTime)), 0, 1)));
         //MergeAddressAndContact.Add('ReadyTime', '/Date(1676379600000)/');
         MergeAddressAndContact.Add('LastPickupTime', StrSubstNo(DateTimeString, Format((GetUnixTimeStamp(LastPickupClosingTime)), 0, 1)));
         MergeAddressAndContact.Add('ClosingTime', StrSubstNo(DateTimeString, Format((GetUnixTimeStamp(LastPickupClosingTime)), 0, 1)));
-        MergeAddressAndContact.Add('Comments', 'open ended field, pass awb and item description');
-        MergeAddressAndContact.Add('Reference1', '5dff00be7ad4f30cd9c3119d123');
-        MergeAddressAndContact.Add('Reference2', 'test123');
+        MergeAddressAndContact.Add('Comments', PickupAddress.Get(9));//open ended field, pass awb and item description
+        MergeAddressAndContact.Add('Reference1', StrSubstNo(OrginalOrderNo, PickupAddress.Get(10)));
+        MergeAddressAndContact.Add('Reference2', PickupAddress.Get(11));
         MergeAddressAndContact.Add('Vehicle', JsonValue.AsToken());
         MergeAddressAndContact.Add('Shipments', JsonValue.AsToken());
 
@@ -82,7 +87,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         PickupItemAttribute.Add('CashAmount', JsonValue.AsToken());
         PickupItemAttribute.Add('ExtraCharges', JsonValue.AsToken());
         PickupItemAttribute.Add('ShipmentDimensions', JsonValue.AsToken());
-        PickupItemAttribute.Add('Comments', 'no description');
+        PickupItemAttribute.Add('Comments', '');
         PickupItemArray.Add(PickupItemAttribute);
 
         //PickupItems -> MergeAddressAndContact
@@ -90,8 +95,15 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         MergeAddressAndContact.Add('Status', 'Ready');
 
         //ExistingShipments as an array
-        ExistingShipmentsAttribute.Add('Number', '44097921744');
-        ExistingShipmentsAttribute.Add('OriginEntity', 'DXB');
+
+        //Remove after test
+        AzadeaSetup.Get();
+        if AzadeaSetup."Aramex Shipment No" <> '' then
+            ExistingShipmentsAttribute.Add('Number', Format(AzadeaSetup."Aramex Shipment No"));
+        //Remove after test
+
+        MergeAddressAndContact.Add('Number', PickupAddress.Get(12)); //ExistingShipmentsAttribute.Add('Number', '44097921744');
+        ExistingShipmentsAttribute.Add('OriginEntity', Format(ShippingAgent."Account Entity"));
         ExistingShipmentsAttribute.Add('ProductGroup', 'DOM');
         ExistingShipmentsArray.Add(ExistingShipmentsAttribute);
 
@@ -107,7 +119,6 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         JsonPickUp.Add('LabelInfo', JsonValue.AsToken());
 
         //ClientInfo
-        ShippingAgent.Get(ShippingAgentService."Shipping Agent Code");
         ClientInfoAttributes.Add('UserName', format(ShippingAgent.UserName));
         ClientInfoAttributes.Add('Password', Format(ShippingAgent.Password));
         ClientInfoAttributes.Add('Version', 'v1.0');
@@ -122,8 +133,8 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         JsonPickUp.Add('ClientInfo', ClientInfoAttributes);
         JsonPickUp.Add('Transaction', JsonValue.AsToken());
 
-        Message(Format(JsonPickUp));
         SendJsonData(JsonPickUp);
+        Message(Format(JsonPickUp));
 
     end;
 
@@ -153,8 +164,14 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         CompanyInformation."Base Calendar Code" := ShippingAgentService."Base Calendar Code";
         CalendarManagement.SetSource(CompanyInformation, CustomizedCalendarChange);
 
+
         ReadyTime := System.Time + 3600000;
         PickupDate := Today;
+
+        //Remove after test
+        if AzadeaSetup."Aramex Pickup Creation Time" <> 0T then
+            ReadyTime := AzadeaSetup."Aramex Pickup Creation Time";
+        //Remove after test
 
         if ReadyTime >= ShippingAgentService."Cut Off End Time" then
             PickupDate += 1;
@@ -200,9 +217,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
 
         Clients.send(HttpReqMessage, Response);
         Response.Content.ReadAs(Result);
-        StoreRespose(Result);
-        //Message(Result);
-
+        StoreRespose(Result);       //Message(Result);
     end;
 
     local procedure ReadJson(var JObject: JsonObject): text
@@ -216,8 +231,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         TempBlob.CreateOutStream(OutStr);
         JObject.WriteTo(OutStr);
         OutStr.WriteText(Result);
-        InStr.ReadText(Result);
-        //Message(Result); //Constructed Json
+        InStr.ReadText(Result); //Message(Result); //Constructed Json
         exit(Result);
     end;
 
@@ -230,7 +244,6 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         ErrCode, NotificationMsg, HasErrors : text;
         i: Integer;
         ResponseID, ResponseGUID, ResponseRef1, ResponseRef2 : text;
-        SalesHeader: Record "Sales Header";
         AirwayBill: Record "Airway Bill";
         BigText: BigText;
         AramexError: Label '%1 : %2 - %3';
@@ -246,7 +259,6 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
                 NotificationsJMgmnt.GetStringPropertyValueByName('Message', NotificationMsg);
             end;
         end;
-
         JSONManagement.GetArrayPropertyValueAsStringByName('HasErrors', HasErrors);
 
         if JSONManagement.GetArrayPropertyValueAsStringByName('ProcessedPickup', ProcessedPickup) then begin
@@ -256,20 +268,59 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
             ProcessedPickupJMgmnt.GetStringPropertyValueByName('Reference1', ResponseRef1);
             ProcessedPickupJMgmnt.GetStringPropertyValueByName('Reference2', ResponseRef2);
 
-
-            if (HasErrors = 'True') and (ResponseID <> '') or (HasErrors = 'False') then begin
+            if ((HasErrors = 'True') and (ResponseID <> '')) or (HasErrors = 'False') then begin
                 AirwayBill.SetRange("No.", ResponseID);
                 if not AirwayBill.FindSet() then
-                    AirwayBill.InsertPackageNew(37, SalesHeader."Document Type"::"Return Order", ResponseRef2, 1000, ResponseID,
+                    AirwayBill.InsertPackageNew(37, SalesHeader."Document Type"::"Return Order".AsInteger(), SalesHeader."No.", 1000, ResponseID,
                                                 ResponseGUID, AirwayBill."Line Type"::"Airway Bill", '', BigText, ResponseID,
                                                 '', ShippingAgent.Code, '', '', 0, '');
             end else
                 Error(AramexError, ShippingAgent.Code, ErrCode, NotificationMsg);
-
         end;
     end;
 
+    local procedure GetCommunicationAddress(Var SalesHeader: Record "Sales Header")
     var
+    begin
+        Clear(PickupAddress);
+        PickupAddress.Insert(1, format(SalesHeader."Sell-to Address"));
+        PickupAddress.Insert(2, format(SalesHeader."Sell-to Address 2"));
+        PickupAddress.Insert(3, format(SalesHeader."Sell-to City"));
+        PickupAddress.Insert(4, format(SalesHeader."Sell-to Country/Region Code"));
+        PickupAddress.Insert(5, format(SalesHeader."Sell-to Customer Name"));
+        PickupAddress.Insert(6, format(SalesHeader."Sell-to Phone No."));
+        PickupAddress.Insert(7, format(SalesHeader."Sell-to Phone No."));
+        PickupAddress.Insert(8, format(SalesHeader."Sell-to E-Mail"));
+        PickupAddress.Insert(9, format(GetItemDesctiptions));
+        PickupAddress.Insert(10, format(SalesHeader."Original Order No."));
+        PickupAddress.Insert(11, format(SalesHeader."No."));
+        PickupAddress.Insert(12, format(GetWhseShipmentNo));
+    end;
+
+    local procedure GetItemDesctiptions(): list of [text]
+    var
+        ItemDesctiptions: list of [text];
+        InternetorderLine: Record "Internet Order Line";
+    begin
+        InternetorderLine.SetRange("Internet Order Reference", SalesHeader."No.");
+        if InternetorderLine.FindSet() then
+            repeat
+                ItemDesctiptions.add(InternetorderLine.Description);
+            until InternetorderLine.Next() = 0;
+        exit(ItemDesctiptions)
+    end;
+
+    local procedure GetWhseShipmentNo(): Text
+    var
+        InternetorderHdr: Record "Internet Order Header";
+    begin
+        InternetorderHdr.SetRange("Internet Order Reference", SalesHeader."No.");
+        if InternetorderHdr.FindSet() then
+            exit(InternetorderHdr."Warehouse Shipment No.")
+    end;
+
+    var
+        SalesHeader: Record "Sales Header";
         ShippingAgentService: Record "Shipping Agent Services";
         ShippingAgent: Record "Shipping Agent";
         CustomizedCalendarChange: Record "Customized Calendar Change";
@@ -277,4 +328,6 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         CompanyInformation: Record "Company Information";
         PickUpReadyDTTime: DateTime;
         LastPickupClosingTime: DateTime;
+        PickupAddress: List of [Text];
+        AzadeaSetup: Record "Azadea Setup"; //Remove after test
 }
