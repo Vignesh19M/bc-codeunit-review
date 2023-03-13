@@ -85,6 +85,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         AirwayBill: Record "Airway Bill";
         BigText: BigText;
         AramexError: Label '%1 : %2 - %3';
+        IntegrationErrorHandler: Codeunit "Integration Error Handler";
     begin
         JSONManagement.InitializeObject(Result);
         if JSONManagement.GetArrayPropertyValueAsStringByName('Notifications', NotificationsJsonArray) then begin
@@ -107,13 +108,18 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
             ProcessedPickupJMgmnt.GetStringPropertyValueByName('Reference2', ResponseRef2);
 
             if ((HasErrors = 'True') and (ResponseID <> '')) or (HasErrors = 'False') then begin
-                AirwayBill.SetRange("No.", ResponseID);
-                if not AirwayBill.FindSet() then
-                    AirwayBill.InsertPackageNew(37, SalesHeader."Document Type"::"Return Order".AsInteger(), SalesHeader."No.", 1000, ResponseID,
-                                                ResponseGUID, AirwayBill."Line Type"::"Airway Bill", '', BigText, ResponseID,
-                                                '', ShippingAgent.Code, '', '', 0, '');
+                AirwayBill.SetRange("Source No.", SalesHeader."No.");
+                AirwayBill.SetRange("No.", GetShipmentNoAWB());
+                AirwayBill.SetFilter("Pickup ID", '');
+                if AirwayBill.FindSet() then begin
+                    AirwayBill."Pickup ID" := ResponseID;
+                    AirwayBill."Pickup GUID" := ResponseGUID;
+                    AirwayBill.Modify();
+                end;
             end else
-                Error(AramexError, ShippingAgent.Code, ErrCode, NotificationMsg);
+                if GuiAllowed then
+                    Error(AramexError, ShippingAgent.Code, ErrCode, NotificationMsg);
+            IntegrationErrorHandler.LogError('Aramex', '', '', SalesHeader."Document Type".AsInteger(), SalesHeader."No.", 0, StrSubstNo(AramexError, ShippingAgent.Code), '', 0, NotificationMsg, '');
         end;
     end;
 
@@ -127,6 +133,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         AirwayBill.SetRange("Source Type", 37);
         AirwayBill.SetRange("Source Subtype", AirwayBill."Source Subtype"::"Return Order");
         AirwayBill.SetRange("Azadea Status", AirwayBill."Azadea Status"::"Order Created");
+        AirwayBill.SetFilter("Pickup ID", '');
         if AirwayBill.FindSet() then
             repeat
                 if SalesHeader.get(SalesHeader."Document Type"::"Return Order", AirwayBill."Source No.") then begin
@@ -193,7 +200,6 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
     begin
         JSonPickUpAddressAttribute.Add('Line1', PickupAddress.Get(1));
         JSonPickUpAddressAttribute.Add('Line2', PickupAddress.Get(2));
-
         JSonPickUpAddressAttribute.Add('Line3', '');
         JSonPickUpAddressAttribute.Add('City', PickupAddress.Get(3));
         JSonPickUpAddressAttribute.Add('StateOrProvinceCode', PickupAddress.Get(3));
@@ -204,7 +210,6 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         JsonValue.SetValueToNull();
         JSonPickUpAddressAttribute.Add('BuildingNumber', JsonValue.AsToken());
         JSonPickUpAddressAttribute.Add('BuildingName', JsonValue.AsToken());
-
         JSonPickUpAddressAttribute.Add('Floor', JsonValue.AsToken());
         JSonPickUpAddressAttribute.Add('Apartment', JsonValue.AsToken());
         JSonPickUpAddressAttribute.Add('POBox', JsonValue.AsToken());
@@ -235,9 +240,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         MergeAddressAndContact.Add('PickupAddress', JSonPickUpAddressAttribute);
         MergeAddressAndContact.Add('PickupContact', PickupContactAttribute);
         MergeAddressAndContact.Add('PickupLocation', PickupAddress.Get(1));//Reception
-
         GetPickUpReadyDateTime();
-
         //message(Format(Format((GetUnixTimeStamp(CurrentDateTime)), 0, 1)));
         MergeAddressAndContact.Add('PickupDate', StrSubstNo(DateTimeString, Format((GetUnixTimeStamp(PickUpReadyDTTime)), 0, 1)));
         MergeAddressAndContact.Add('ReadyTime', StrSubstNo(DateTimeString, Format((GetUnixTimeStamp(PickUpReadyDTTime)), 0, 1)));
@@ -324,7 +327,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
     begin
         JsonPickUp.Add('ClientInfo', ClientInfoAttributes);
         JsonPickUp.Add('Transaction', JsonValue.AsToken());
-        Message(Format(JsonPickUp));
+        //Message(Format(JsonPickUp));
     end;
 
     procedure GetPickUpReadyDateTime()
@@ -335,7 +338,6 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
     begin
         LastPickupClosingTime := 0DT;
         PickUpReadyDTTime := 0DT;
-
 
         CompanyInformation."Base Calendar Code" := ShippingAgentService."Base Calendar Code";
         CalendarManagement.SetSource(CompanyInformation, CustomizedCalendarChange);
@@ -382,7 +384,6 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         OriginDateTime := OriginDateTime + TimeZoneOffset;
         exit(FromDateTime - OriginDateTime);
     end;
-
 
     var
         SalesHeader: Record "Sales Header";
