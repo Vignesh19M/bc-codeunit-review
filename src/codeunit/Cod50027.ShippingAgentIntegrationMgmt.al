@@ -350,7 +350,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
             ReadyTime := AzadeaSetup."Aramex Pickup Creation Time";
         //Remove after test
 
-        if ReadyTime >= ShippingAgentService."Cut Off End Time" then
+        if ReadyTime >= ShippingAgentService."Pickup End Time" then
             PickupDate += 1;
 
         repeat
@@ -361,16 +361,16 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         until WorkingDay = true;
         // Message(Format(PickupDate));
         if PickupDate > Today then
-            PickUpReadyDTTime := System.CreateDateTime(PickupDate, ShippingAgentService."Cut Off Start Time");
+            PickUpReadyDTTime := System.CreateDateTime(PickupDate, ShippingAgentService."Pickup Start Time");
 
         if (format(PickUpReadyDTTime) = '') then begin
-            if (ReadyTime < ShippingAgentService."Cut Off End Time") and (ReadyTime > ShippingAgentService."Cut Off Start Time") then
+            if (ReadyTime < ShippingAgentService."Pickup End Time") and (ReadyTime > ShippingAgentService."Pickup Start Time") then
                 PickUpReadyDTTime := System.CreateDateTime(PickupDate, ReadyTime)
             else
-                if ReadyTime < ShippingAgentService."Cut Off Start Time" then
-                    PickUpReadyDTTime := System.CreateDateTime(PickupDate, ShippingAgentService."Cut Off Start Time");
+                if ReadyTime < ShippingAgentService."Pickup Start Time" then
+                    PickUpReadyDTTime := System.CreateDateTime(PickupDate, ShippingAgentService."Pickup Start Time");
         end;
-        LastPickupClosingTime := System.CreateDateTime(PickupDate, ShippingAgentService."Cut Off End Time");
+        LastPickupClosingTime := System.CreateDateTime(PickupDate, ShippingAgentService."Pickup End Time");
     end;
 
     procedure GetUnixTimeStamp(FromDateTime: DateTime): Decimal
