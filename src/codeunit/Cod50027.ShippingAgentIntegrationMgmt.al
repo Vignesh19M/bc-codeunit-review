@@ -56,7 +56,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         Clients.send(HttpReqMessage, Response);
         Response.Content.ReadAs(Result);
         StoreRespose(Result);
-        Message(Result);
+        //Message(Result);
     end;
 
     local procedure ReadJson(var JObject: JsonObject): text
@@ -71,7 +71,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         JObject.WriteTo(OutStr);
         OutStr.WriteText(Result);
         InStr.ReadText(Result);
-        Message(Result); //Constructed Json
+        //Message(Result); //Constructed Json
         exit(Result);
     end;
 
@@ -285,7 +285,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
             ExistingShipmentsAttribute.Add('Number', Format(AzadeaSetup."Aramex Shipment No"))
         else
             //Remove after test
-            MergeAddressAndContact.Add('Number', PickupAddress.Get(12)); //ExistingShipmentsAttribute.Add('Number', '44097921744');
+            ExistingShipmentsAttribute.Add('Number', PickupAddress.Get(12)); //ExistingShipmentsAttribute.Add('Number', '44097921744');
         ExistingShipmentsAttribute.Add('OriginEntity', Format(ShippingAgent."Account Entity"));
         ExistingShipmentsAttribute.Add('ProductGroup', 'DOM');
         ExistingShipmentsArray.Add(ExistingShipmentsAttribute);
@@ -348,6 +348,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         PickupDate := Today;
 
         //Remove after test
+        AzadeaSetup.Get();
         if AzadeaSetup."Aramex Pickup Creation Time" <> 0T then
             ReadyTime := AzadeaSetup."Aramex Pickup Creation Time";
         //Remove after test
