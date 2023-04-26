@@ -55,7 +55,8 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
 
         Clients.send(HttpReqMessage, Response);
         Response.Content.ReadAs(Result);
-        StoreRespose(Result);       //Message(Result);
+        StoreRespose(Result);
+        Message(Result);
     end;
 
     local procedure ReadJson(var JObject: JsonObject): text
@@ -69,7 +70,8 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         TempBlob.CreateOutStream(OutStr);
         JObject.WriteTo(OutStr);
         OutStr.WriteText(Result);
-        InStr.ReadText(Result); //Message(Result); //Constructed Json
+        InStr.ReadText(Result);
+        Message(Result); //Constructed Json
         exit(Result);
     end;
 
