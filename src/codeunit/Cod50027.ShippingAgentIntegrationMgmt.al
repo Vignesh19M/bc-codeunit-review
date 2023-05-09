@@ -139,9 +139,9 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         if AirwayBill.FindSet() then
             repeat
                 if SalesHeader.get(SalesHeader."Document Type"::"Return Order", AirwayBill."Source No.") then begin
-                    ShippingAgentService.SetRange("Shipping Agent Code", AirwayBill."Shipping Agent");
-                    ShippingAgentService.SetRange(Type, ShippingAgentService.Type::Pickup);
-                    if ShippingAgentService.FindSet() then
+                    ShippingAgentServices.SetRange("Shipping Agent Code", AirwayBill."Shipping Agent");
+                    ShippingAgentServices.SetRange(Type, ShippingAgentServices.Type::Pickup);
+                    if ShippingAgentServices.FindSet() then
                         CreatePickup(SalesHeader, ShippingAgentServices);
                 end;
             until AirwayBill.Next() = 0;
