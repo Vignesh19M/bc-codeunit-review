@@ -135,7 +135,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         AirwayBill.SetRange("Source Type", 37);
         AirwayBill.SetRange("Source Subtype", AirwayBill."Source Subtype"::"Return Order");
         AirwayBill.SetRange("Azadea Status", AirwayBill."Azadea Status"::"Order Created");
-        AirwayBill.SetFilter("Pickup ID", '');
+        AirwayBill.SetFilter("Pickup ID", '%1', '');
         if AirwayBill.FindSet() then
             repeat
                 if SalesHeader.get(SalesHeader."Document Type"::"Return Order", AirwayBill."Source No.") then begin
