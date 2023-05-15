@@ -71,7 +71,8 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         JObject.WriteTo(OutStr);
         OutStr.WriteText(Result);
         InStr.ReadText(Result);
-        //Message(Result); //Constructed Json
+        if (AzadeaSetup."Show Pickup Request") and (CurrentClientType = ClientType::Web) or (CurrentClientType = ClientType::Windows) then
+            Message(Result); //Constructed Json
         exit(Result);
     end;
 
