@@ -111,7 +111,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
             ProcessedPickupJMgmnt.GetStringPropertyValueByName('Reference2', ResponseRef2);
 
             IF ErrCode = 'ERR50' then //Shipment is already associated with another pickup
-                ResponseID := CopyStr(NotificationMsg, 89, 8);
+                ResponseID := CopyStr(NotificationMsg, 89, 9);
 
             if ((HasErrors = 'True') and (ResponseID <> '')) or (HasErrors = 'False') then begin
                 AirwayBill.SetRange("Source No.", SalesHeader."No.");
