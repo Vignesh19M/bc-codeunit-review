@@ -163,7 +163,7 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
     var
     begin
         Clear(PickupAddress);
-        PickupAddress.Insert(1, format(SalesHeader."Sell-to Address"));
+        PickupAddress.Insert(1, format((SalesHeader."Sell-to Address"), 0, 9));
         PickupAddress.Insert(2, format(SalesHeader."Sell-to Address 2"));
         PickupAddress.Insert(3, format(SalesHeader."Sell-to City"));
         PickupAddress.Insert(4, format(SalesHeader."Sell-to Country/Region Code"));
