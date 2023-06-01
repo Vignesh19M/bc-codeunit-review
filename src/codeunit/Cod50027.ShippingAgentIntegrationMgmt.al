@@ -163,11 +163,11 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
     var
     begin
         Clear(PickupAddress);
-        PickupAddress.Insert(1, format((SalesHeader."Sell-to Address"), 0, 9));
-        PickupAddress.Insert(2, format(SalesHeader."Sell-to Address 2"));
+        PickupAddress.Insert(1, ConvertTextToUTF8(SalesHeader."Sell-to Address"));
+        PickupAddress.Insert(2, ConvertTextToUTF8(SalesHeader."Sell-to Address 2"));
         PickupAddress.Insert(3, format(SalesHeader."Sell-to City"));
         PickupAddress.Insert(4, format(SalesHeader."Sell-to Country/Region Code"));
-        PickupAddress.Insert(5, format(SalesHeader."Sell-to Customer Name"));
+        PickupAddress.Insert(5, ConvertTextToUTF8(SalesHeader."Sell-to Customer Name"));
         PickupAddress.Insert(6, format(SalesHeader."Ship-to Phone No."));
         PickupAddress.Insert(7, format(SalesHeader."Ship-to Phone No."));
         PickupAddress.Insert(8, format(SalesHeader."Bill-to E-Mail"));
@@ -175,6 +175,21 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         PickupAddress.Insert(10, format(SalesHeader."Original Order No."));
         PickupAddress.Insert(11, format(SalesHeader."No."));
         PickupAddress.Insert(12, format(GetShipmentNoAWB()));
+    end;
+
+    local procedure ConvertTextToUTF8(pText: Text) rUTF8Text: Text
+    var
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        OutStr: OutStream;
+    begin
+        Clear(TempBlob);
+        Message('Before Convert %1', pText);
+        TempBlob.CreateOutStream(OutStr, TextEncoding::Windows);
+        TempBlob.CreateInStream(InStr);
+        OutStr.WriteText(pText);
+        InStr.ReadText(rUTF8Text);
+        Message('after Convert %1', rUTF8Text);
     end;
 
     local procedure GetItemDesctiptions(): text
