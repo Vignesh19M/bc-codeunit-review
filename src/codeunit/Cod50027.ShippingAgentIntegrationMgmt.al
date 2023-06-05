@@ -181,12 +181,10 @@ codeunit 50027 "ShippingAgent Integration Mgmt"
         OutStr: OutStream;
     begin
         Clear(TempBlob);
-        Message('Before Convert %1', pText);
         TempBlob.CreateOutStream(OutStr, TextEncoding::Windows);
         TempBlob.CreateInStream(InStr);
         OutStr.WriteText(pText);
         InStr.ReadText(rUTF8Text);
-        Message('after Convert %1', rUTF8Text);
     end;
 
     local procedure GetItemDesctiptions(): text
