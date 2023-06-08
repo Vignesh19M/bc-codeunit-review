@@ -57,8 +57,8 @@ codeunit 50046 "Moengage API Integration"
         JObjAction.Add('action', OrderTrackingStatus.Status);
         JObjAttributes.Add('InternetOrderNo', OrderTrackingStatus."Internet Order No.");
         JObjAttributes.Add('productId', OrderTrackingStatus."Item No.");
-        Item.get(OrderTrackingStatus."Item No.");
-        item.CalcFields(item."Brand Name");
+        if Item.get(OrderTrackingStatus."Item No.") then
+            item.CalcFields(item."Brand Name");
         JObjAttributes.Add('ProductBrand', Item."Brand Name");
         JObjAttributes.Add('ProductDescription', Item.Description);
         JObjAttributes.Add('Qty', Format(OrderTrackingStatus.Quantity));
