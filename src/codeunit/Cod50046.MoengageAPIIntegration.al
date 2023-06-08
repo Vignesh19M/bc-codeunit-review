@@ -60,7 +60,7 @@ codeunit 50046 "Moengage API Integration"
         if Item.get(OrderTrackingStatus."Item No.") then
             item.CalcFields(item."Brand Name");
         JObjAttributes.Add('ProductBrand', Item."Brand Name");
-        JObjAttributes.Add('ProductDescription', Item.Description);
+        JObjAttributes.Add('ProductDescription', ConvertTextToUTF8(Item.Description));
         JObjAttributes.Add('Qty', Format(OrderTrackingStatus.Quantity));
         JObjAttributes.Add('TotalLineQty', Format(OrderTrackingStatus."Total Line Qty."));
         JObjAttributes.Add('TotalProcessedQty', Format(OrderTrackingStatus."Total Processed Qty."));
@@ -70,8 +70,8 @@ codeunit 50046 "Moengage API Integration"
         JObjAttributes.Add('OrderAmount', Format(OrderTrackingStatus."Order Amount"));
         JObjAttributes.Add('OrderDiscountAmount', Format(OrderTrackingStatus."Order Discount Amount"));
         JObjAttributes.Add('PaymentMethod', Format(OrderTrackingStatus."Payment Method"));
-        JObjAttributes.Add('ShippingAddress', GetCustomerAddress(OrderTrackingStatus."Document No.", false, true));
-        JObjAttributes.Add('BillingAddress', GetCustomerAddress(OrderTrackingStatus."Document No.", true, false));
+        JObjAttributes.Add('ShippingAddress', ConvertTextToUTF8(GetCustomerAddress(OrderTrackingStatus."Document No.", false, true)));
+        JObjAttributes.Add('BillingAddress', ConvertTextToUTF8(GetCustomerAddress(OrderTrackingStatus."Document No.", true, false)));
         JObjAttributes.Add('DeliveryStatus', Format(OrderTrackingStatus."Delivery Status"));
         JObjAttributes.Add('AzadeaDeliveryStatus', Format(OrderTrackingStatus."Azadea Status"));
         JObjAttributes.Add('DeliveryTrackingLink', Format(OrderTrackingStatus."Package Tracking URL"));
@@ -84,6 +84,20 @@ codeunit 50046 "Moengage API Integration"
         SendData(JObject); //Send Json to API
     end;
 
+    procedure ConvertTextToUTF8(pText: Text) rUTF8Text: Text
+    var
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        OutStr: OutStream;
+    begin
+        Clear(TempBlob);
+        TempBlob.CreateOutStream(OutStr, TextEncoding::Windows);
+        TempBlob.CreateInStream(InStr);
+        OutStr.WriteText(pText);
+        InStr.ReadText(rUTF8Text);
+        exit(rUTF8Text)
+    end;
+
     local procedure GetCustomerEmail(OrderNo: code[20]): Text
     var
         SalInvHdr: Record "Sales Invoice Header";
@@ -94,9 +108,14 @@ codeunit 50046 "Moengage API Integration"
             exit(SalHdr."Bill-to E-Mail");
         if IsRetrunOrder() then
             OrderNo := OrderTrackingStatus."Internet Order No.";
+
+        if OrderTrackingStatus."Document Type" <> OrderTrackingStatus."Document Type"::"Sales Order" then
+            OrderNo := OrderTrackingStatus."Internet Order No.";
+
         SalInvHdr.SetRange("Order No.", OrderNo);
         if SalInvHdr.FindSet() then
             exit(SalInvHdr."Bill-to E-Mail");
+
     end;
 
     local procedure GetCustomerAddress(OrderNo: code[20]; Bill: Boolean; Sell: Boolean): Text
