@@ -116,6 +116,9 @@ codeunit 50046 "Moengage API Integration"
         if SalInvHdr.FindSet() then
             exit(SalInvHdr."Bill-to E-Mail");
 
+        //If order cancelled No order and Invoice will be exsist, without Customer email id event cant be sent.
+        OrderTrackingStatus."Integrtation Status" := 'MANUALIGNORE';
+        OrderTrackingStatus.Modify();
     end;
 
     local procedure GetCustomerAddress(OrderNo: code[20]; Bill: Boolean; Sell: Boolean): Text
@@ -216,7 +219,8 @@ codeunit 50046 "Moengage API Integration"
         JObject.WriteTo(OutStr);
         OutStr.WriteText(Result);
         InStr.ReadText(Result);
-        //  Message(Result); //Constructed Json
+        if (AzadeaSetup."Show Pickup Request") and (CurrentClientType = ClientType::Web) or (CurrentClientType = ClientType::Windows) then
+            Message(Result); //Constructed Json
         exit(Result);
     end;
 
