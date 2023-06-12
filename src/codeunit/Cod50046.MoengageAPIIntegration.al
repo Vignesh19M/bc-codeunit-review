@@ -219,7 +219,7 @@ codeunit 50046 "Moengage API Integration"
         JObject.WriteTo(OutStr);
         OutStr.WriteText(Result);
         InStr.ReadText(Result);
-        if (AzadeaSetup."Show Pickup Request") and (CurrentClientType = ClientType::Web) or (CurrentClientType = ClientType::Windows) then
+        if (AzadeaSetup."Show MoEngage Request") and (CurrentClientType = ClientType::Web) or (CurrentClientType = ClientType::Windows) then
             Message(Result); //Constructed Json
         exit(Result);
     end;
