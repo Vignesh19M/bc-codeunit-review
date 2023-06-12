@@ -119,8 +119,8 @@ codeunit 50046 "Moengage API Integration"
 
         //If order cancelled No order and Invoice will be exsist, without Customer email id event cant be sent.
         if IsCancelledOrder() then begin
-            InternetOrderHeader.SetCurrentKey("Original Order No.");
-            InternetOrderHeader.SetRange("Original Order No.", OrderNo);
+            InternetOrderHeader.SetCurrentKey("Internet Order Reference");
+            InternetOrderHeader.SetRange("Internet Order Reference", OrderNo);
             InternetOrderHeader.SetRange(Status, InternetOrderHeader.Status::Converted);
             if InternetOrderHeader.FindFirst() then
                 exit(InternetOrderHeader."Bill-to E-Mail");
