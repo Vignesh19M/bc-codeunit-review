@@ -114,13 +114,15 @@ codeunit 50046 "Moengage API Integration"
             OrderNo := OrderTrackingStatus."Internet Order No.";
 
         SalInvHdr.SetRange("Order No.", OrderNo);
-        if SalInvHdr.FindSet() then
+        if SalInvHdr.FindFirst() then
             exit(SalInvHdr."Bill-to E-Mail");
 
         //If order cancelled No order and Invoice will be exsist, without Customer email id event cant be sent.
         if IsCancelledOrder() then begin
+            InternetOrderHeader.SetCurrentKey("Original Order No.");
             InternetOrderHeader.SetRange("Original Order No.", OrderNo);
-            if InternetOrderHeader.FindSet() then
+            InternetOrderHeader.SetRange(Status, InternetOrderHeader.Status::Converted);
+            if InternetOrderHeader.FindFirst() then
                 exit(InternetOrderHeader."Bill-to E-Mail");
         end;
 
@@ -142,23 +144,24 @@ codeunit 50046 "Moengage API Integration"
             OrderNo := OrderTrackingStatus."Internet Order No.";
 
         SalInvHdr.SetRange("Order No.", OrderNo);
-        if SalInvHdr.FindSet() then begin
+        if SalInvHdr.FindFirst() then begin
             if Bill then
                 exit(SalInvHdr."Bill-to Address" + ',' + SalInvHdr."Bill-to Address 2" + ',' + SalInvHdr."Bill-to City" + ',' + SalInvHdr."Bill-to Country/Region Code")
             else
                 if sell then
                     exit(SalInvHdr."Sell-to Address" + ',' + SalInvHdr."Sell-to Address 2" + ',' + SalInvHdr."Sell-to City" + ',' + SalInvHdr."Sell-to Country/Region Code");
-
         end;
+
+        InternetOrderHeader.SetCurrentKey("Internet Order Reference");
         InternetOrderHeader.SetRange("Internet Order Reference", OrderNo);
-        if InternetOrderHeader.FindSet() then begin
+        InternetOrderHeader.Setrange(Status, InternetOrderHeader.Status::Converted);
+        if InternetOrderHeader.FindFirst() then begin
             if Bill then
                 exit(InternetOrderHeader."Bill-to Address" + ',' + InternetOrderHeader."Bill-to Address 2" + ',' + InternetOrderHeader."Bill-to City" + ',' + InternetOrderHeader."Bill-to Country Code")
             else
                 if sell then
                     exit(InternetOrderHeader."Sell-to Address" + ',' + InternetOrderHeader."Sell-to Address 2" + ',' + InternetOrderHeader."Sell-to City" + ',' + InternetOrderHeader."Ship-to Country Code");
         end;
-
     end;
 
     local procedure SendData(var JObject: JsonObject)
@@ -234,7 +237,7 @@ codeunit 50046 "Moengage API Integration"
         JObject.WriteTo(OutStr);
         OutStr.WriteText(Result);
         InStr.ReadText(Result);
-        if (AzadeaSetup."Show MoEngage Request") and (CurrentClientType = ClientType::Web) or (CurrentClientType = ClientType::Windows) then
+        if (AzadeaSetup."Show MoEngage Request") and ((CurrentClientType = ClientType::Web) or (CurrentClientType = ClientType::Windows)) then
             Message(Result); //Constructed Json
         exit(Result);
     end;
@@ -293,8 +296,6 @@ codeunit 50046 "Moengage API Integration"
     end;
 
     local procedure IsCancelledOrder(): boolean
-    var
-        myInt: Integer;
     begin
         OrderTrackingStatusMaster.Reset();
         OrderTrackingStatusMaster.SetRange(Code, OrderTrackingStatus.Status);
