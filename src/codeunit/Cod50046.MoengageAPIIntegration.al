@@ -102,6 +102,7 @@ codeunit 50046 "Moengage API Integration"
     var
         SalInvHdr: Record "Sales Invoice Header";
         SalHdr: Record "Sales Header";
+        InternetOrderHeader: Record "Internet Order Header";
 
     begin
         if SalHdr.get(SalHdr."Document Type"::Order, OrderNo) then
@@ -117,14 +118,19 @@ codeunit 50046 "Moengage API Integration"
             exit(SalInvHdr."Bill-to E-Mail");
 
         //If order cancelled No order and Invoice will be exsist, without Customer email id event cant be sent.
-        OrderTrackingStatus."Integrtation Status" := 'MANUALIGNORE';
-        OrderTrackingStatus.Modify();
+        if IsCancelledOrder() then begin
+            InternetOrderHeader.SetRange("Original Order No.", OrderNo);
+            if InternetOrderHeader.FindSet() then
+                exit(InternetOrderHeader."Bill-to E-Mail");
+        end;
+
     end;
 
     local procedure GetCustomerAddress(OrderNo: code[20]; Bill: Boolean; Sell: Boolean): Text
     var
         SalInvHdr: Record "Sales Invoice Header";
         SalHdr: Record "Sales Header";
+        InternetOrderHeader: Record "Internet Order Header";
     begin
         if (bill) and (SalHdr.get(SalHdr."Document Type"::Order, OrderNo)) then
             exit(SalHdr."Bill-to Address" + ',' + SalHdr."Bill-to Address 2" + ',' + SalHdr."Bill-to City" + ',' + SalHdr."Bill-to Country/Region Code");
@@ -144,6 +150,15 @@ codeunit 50046 "Moengage API Integration"
                     exit(SalInvHdr."Sell-to Address" + ',' + SalInvHdr."Sell-to Address 2" + ',' + SalInvHdr."Sell-to City" + ',' + SalInvHdr."Sell-to Country/Region Code");
 
         end;
+        InternetOrderHeader.SetRange("Internet Order Reference", OrderNo);
+        if InternetOrderHeader.FindSet() then begin
+            if Bill then
+                exit(InternetOrderHeader."Bill-to Address" + ',' + InternetOrderHeader."Bill-to Address 2" + ',' + InternetOrderHeader."Bill-to City" + ',' + InternetOrderHeader."Bill-to Country Code")
+            else
+                if sell then
+                    exit(InternetOrderHeader."Sell-to Address" + ',' + InternetOrderHeader."Sell-to Address 2" + ',' + InternetOrderHeader."Sell-to City" + ',' + InternetOrderHeader."Ship-to Country Code");
+        end;
+
     end;
 
     local procedure SendData(var JObject: JsonObject)
@@ -275,6 +290,21 @@ codeunit 50046 "Moengage API Integration"
         OrderTrackingStatusMaster.SetRange("Status Type", OrderTrackingStatusMaster."Status Type"::Returned);
         if OrderTrackingStatusMaster.FindSet() then
             exit(true);
+    end;
+
+    local procedure IsCancelledOrder(): boolean
+    var
+        myInt: Integer;
+    begin
+        OrderTrackingStatusMaster.Reset();
+        OrderTrackingStatusMaster.SetRange(Code, OrderTrackingStatus.Status);
+        case OrderTrackingStatusMaster."Status Type" of
+            OrderTrackingStatusMaster."Status Type"::"Refund Cancelled Order", OrderTrackingStatusMaster."Status Type"::"Refund Cancelled Whse Shipment",
+             OrderTrackingStatusMaster."Status Type"::"Refund Customer Return":
+                begin
+                    exit(true);
+                end;
+        end;
     end;
 
     local procedure IsBulkyItem(var Item: Record Item): text
