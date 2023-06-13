@@ -50,6 +50,7 @@ codeunit 50046 "Moengage API Integration"
         JObjAction: JsonObject;
         JObjAttributes: JsonObject;
         JArrAction: JsonArray;
+
     begin
         //Construct Json
         JObject.Add('type', 'event');
@@ -57,8 +58,7 @@ codeunit 50046 "Moengage API Integration"
         JObjAction.Add('action', OrderTrackingStatus.Status);
         JObjAttributes.Add('InternetOrderNo', OrderTrackingStatus."Internet Order No.");
         JObjAttributes.Add('productId', OrderTrackingStatus."Item No.");
-        if Item.get(OrderTrackingStatus."Item No.") then
-            item.CalcFields(item."Brand Name");
+        GetMasters();//Item & GL
         JObjAttributes.Add('ProductBrand', Item."Brand Name");
         JObjAttributes.Add('ProductDescription', ConvertTextToUTF8(Item.Description));
         JObjAttributes.Add('Qty', Format(OrderTrackingStatus.Quantity));
@@ -69,6 +69,8 @@ codeunit 50046 "Moengage API Integration"
         JObjAttributes.Add('ProductPrice', Format(OrderTrackingStatus."Product Price"));
         JObjAttributes.Add('OrderAmount', Format(OrderTrackingStatus."Order Amount"));
         JObjAttributes.Add('OrderDiscountAmount', Format(OrderTrackingStatus."Order Discount Amount"));
+        JObjAttributes.Add('RefundAmount', Format(OrderTrackingStatus."Refund Amount"));
+        JObjAttributes.Add('CurrencyCode', Format(GLSetup."LCY Code"));
         JObjAttributes.Add('PaymentMethod', Format(OrderTrackingStatus."Payment Method"));
         JObjAttributes.Add('ShippingAddress', ConvertTextToUTF8(GetCustomerAddress(OrderTrackingStatus."Document No.", false, true)));
         JObjAttributes.Add('BillingAddress', ConvertTextToUTF8(GetCustomerAddress(OrderTrackingStatus."Document No.", true, false)));
@@ -316,7 +318,6 @@ codeunit 50046 "Moengage API Integration"
             exit('TRUE')
         else
             exit('FALSE')
-
     end;
 
     local procedure IsSplitshipment(): text
@@ -327,8 +328,19 @@ codeunit 50046 "Moengage API Integration"
             exit('TRUE')
         else
             exit('FALSE')
-
     end;
 
+    local procedure GetMasters()
+    begin
+        Item.Reset();
+        if Item.get(OrderTrackingStatus."Item No.") then
+            item.CalcFields(item."Brand Name");
+        if GLSetup.Get() then;
+    end;
+
+    var
+
+        Item: Record Item;
+        GLSetup: Record "General Ledger Setup";
 }
 
